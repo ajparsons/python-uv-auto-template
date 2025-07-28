@@ -1,5 +1,5 @@
 # Tools to publish package to pypi automatically
-# on update of poetry version.
+# on update of project version.
 # Will also update tags on automatic release.
 
 name: "Publish package"
@@ -44,9 +44,33 @@ jobs:
 
       - id: get_status
         name: get_status
-        uses: ajparsons/compare-pypi-poetry-version@v1
-        with:
-         package_name: ${{ steps.repo_name.outputs.value }}
+        run: |
+          pip install toml
+          PACKAGE_NAME=${{ steps.repo_name.outputs.value }}
+          
+          # Get current version from pyproject.toml
+          CURRENT_VERSION=$(python -c "
+          import toml
+          with open('pyproject.toml', 'r') as f:
+              data = toml.load(f)
+          print(data['project']['version'])
+          ")
+          
+          # Check if package exists on PyPI
+          if curl -s "https://pypi.org/pypi/$PACKAGE_NAME/json" > /dev/null 2>&1; then
+            REMOTE_VERSION=$(curl -s "https://pypi.org/pypi/$PACKAGE_NAME/json" | python -c "import sys, json; print(json.load(sys.stdin)['info']['version'])")
+            echo "remote_exists=true" >> $GITHUB_OUTPUT
+            if [ "$CURRENT_VERSION" != "$REMOTE_VERSION" ]; then
+              echo "version_difference=true" >> $GITHUB_OUTPUT
+              echo "version_tags=v$CURRENT_VERSION $CURRENT_VERSION" >> $GITHUB_OUTPUT
+            else
+              echo "version_difference=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "remote_exists=false" >> $GITHUB_OUTPUT
+            echo "version_difference=true" >> $GITHUB_OUTPUT
+            echo "version_tags=v$CURRENT_VERSION $CURRENT_VERSION" >> $GITHUB_OUTPUT
+          fi
 
       - name: Update git tags
         if: ${{ steps.get_status.outputs.remote_exists == 'true' && steps.get_status.outputs.version_difference == 'true'}}
@@ -64,9 +88,13 @@ jobs:
 
       - name: Build and publish to pypi
         if: ${{ steps.get_status.outputs.remote_exists == 'true' && steps.get_status.outputs.version_difference == 'true'}}
-        uses: JRubics/poetry-publish@v1.11
-        with:
-          pypi_token: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="/home/runner/.local/bin:$PATH"
+          uv build
+          uv publish --token $PYPI_TOKEN
+        secrets:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
   # run manual if one of the boolean buttons for workflow was used
   # this can force the initial creation of the package
@@ -80,14 +108,20 @@ jobs:
 
       - name: Build and publish to pypi
         if: ${{ github.event.inputs.pypi == 'true' }}
-        uses: JRubics/poetry-publish@v1.11
-        with:
-          pypi_token: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="/home/runner/.local/bin:$PATH"
+          uv build
+          uv publish --token $PYPI_TOKEN
+        secrets:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
       - name: Build and publish to testpypi
         if: ${{ github.event.inputs.testpypi == 'true' }}
-        uses: JRubics/poetry-publish@v1.11
-        with:
-          pypi_token: ${{ secrets.TEST_PYPI_TOKEN }}
-          repository_name: "testpypi"
-          repository_url: "https://test.pypi.org/legacy/"
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="/home/runner/.local/bin:$PATH"
+          uv build
+          uv publish --publish-url https://test.pypi.org/legacy/ --token $TEST_PYPI_TOKEN
+        secrets:
+          TEST_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}

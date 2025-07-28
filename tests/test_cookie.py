@@ -53,9 +53,9 @@ def test_actions_moved_by_hooks(project_folder: Path):
 @pytest.fixture(scope="session")
 def activated_project(project_folder: Path):
     """
-    Activate venv inside project
+    Install dependencies and activate environment inside project
     """
-    subprocess.run("poetry install".split(" "), check=True, cwd=project_folder)
+    subprocess.run("uv sync --dev".split(" "), check=True, cwd=project_folder)
     return project_folder
 
 def test_project_generation(project_folder: Path):
@@ -70,17 +70,23 @@ def test_internal_pytest(activated_project: Path):
     Within clone of project, try and run the internal meta tests
     This will check basic stuff like the python library paths being valid.
     """
-    subprocess.run("poetry run pytest".split(" "), check=True, cwd=activated_project)
+    subprocess.run("uv run pytest".split(" "), check=True, cwd=activated_project)
 
-def test_black(activated_project: Path):
+def test_ruff_check(activated_project: Path):
     """
-    Within clone of project, try and run black
+    Within clone of project, try and run ruff check
     """
-    subprocess.run("poetry run black .".split(" "), check=True, cwd=activated_project)
+    subprocess.run("uv run ruff check .".split(" "), check=True, cwd=activated_project)
+
+def test_ruff_format(activated_project: Path):
+    """
+    Within clone of project, try and run ruff format
+    """
+    subprocess.run("uv run ruff format --check .".split(" "), check=True, cwd=activated_project)
 
 
 def test_pyright(activated_project: Path):
     """
     Within clone of project, try and run pyright
     """
-    subprocess.run("poetry run pyright".split(" "), check=True, cwd=activated_project)
+    subprocess.run("uv run pyright".split(" "), check=True, cwd=activated_project)

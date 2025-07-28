@@ -2,12 +2,9 @@
     "python.linting.pylintEnabled": true,
     "python.defaultInterpreterPath": "/usr/local/bin/python",
     "python.terminal.activateEnvironment": false,
-    "python.formatting.provider": "black",
+    "python.formatting.provider": "ruff",
     "python.analysis.typeCheckingMode": "strict",
     "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-        "source.organizeImports": true
-    },
     "git.pullTags": false,
     "ltex.language": "en-GB",
     "files.exclude": {

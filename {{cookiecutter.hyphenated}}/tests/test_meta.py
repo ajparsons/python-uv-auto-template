@@ -19,12 +19,12 @@ def test_version_in_workflow():
 
 
 def test_versions_are_in_sync():
-    """Checks if the pyproject.toml and package.__init__.py __version__ are in sync."""
+    """Checks if the pyproject.toml version matches package.__init__.py __version__."""
 
     path = Path(__file__).resolve().parents[1] / "pyproject.toml"
     pyproject = toml.loads(open(str(path), encoding="utf-8").read())
-    pyproject_version = pyproject["tool"]["poetry"]["version"]
+    pyproject_version = pyproject["project"]["version"]
 
     package_init_version = package.__version__
 
-    assert package_init_version == pyproject_version
+    assert package_init_version == pyproject_version, f"Version mismatch: __init__.py has {package_init_version}, pyproject.toml has {pyproject_version}"
