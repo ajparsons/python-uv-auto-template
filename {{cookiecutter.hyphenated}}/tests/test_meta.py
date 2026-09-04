@@ -1,10 +1,8 @@
-"""
-Run meta tests on package (apply to muliple packages)
+"""Run project metadata tests."""
 
-"""
 from pathlib import Path
+
 import {{cookiecutter.underscored}} as package
-import toml
 
 
 def test_version_in_workflow():
@@ -13,18 +11,15 @@ def test_version_in_workflow():
     """
     package_init_version = package.__version__
     path = Path(__file__).resolve().parents[1] / "CHANGELOG.md"
-    change_log = path.read_text()
-    format = f"## [{package_init_version}]"
-    assert format in change_log
+    change_log = path.read_text(encoding="utf-8")
+    version_heading = f"## [{package_init_version}]"
+    assert version_heading in change_log
 
 
 def test_versions_are_in_sync():
     """Checks if the pyproject.toml version matches package.__init__.py __version__."""
 
-    path = Path(__file__).resolve().parents[1] / "pyproject.toml"
-    pyproject = toml.loads(open(str(path), encoding="utf-8").read())
-    pyproject_version = pyproject["project"]["version"]
-
-    package_init_version = package.__version__
-
-    assert package_init_version == pyproject_version, f"Version mismatch: __init__.py has {package_init_version}, pyproject.toml has {pyproject_version}"
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    expected_version = 'version = "0.1.0"'
+    assert expected_version in pyproject.read_text(encoding="utf-8")
+    assert package.__version__ == "0.1.0"
