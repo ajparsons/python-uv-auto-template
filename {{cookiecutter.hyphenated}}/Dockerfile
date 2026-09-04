@@ -1,9 +1,7 @@
-FROM python:3.10-bullseye
+FROM python:3.14-bookworm
 
-ENV DEBIAN_FRONTEND noninteractive
-COPY pyproject.toml uv.loc[k] /
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    echo 'export PATH="/root/.local/bin:$PATH"' > ~/.bashrc && \
-    export PATH="/root/.local/bin:$PATH" && \
-    uv pip install --system -e . && \
-    echo "/workspaces/{{cookiecutter.hyphenated}}/src/" > /usr/local/lib/python3.10/site-packages/{{cookiecutter.underscored}}.pth
+COPY --from=ghcr.io/astral-sh/uv:0.12.9 /uv /uvx /bin/
+
+ENV UV_LINK_MODE=copy
+ENV UV_PROJECT_ENVIRONMENT=/workspaces/{{cookiecutter.hyphenated}}/.venv
+ENV PATH="/workspaces/{{cookiecutter.hyphenated}}/.venv/bin:${PATH}"

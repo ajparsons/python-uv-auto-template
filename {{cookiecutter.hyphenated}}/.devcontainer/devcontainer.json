@@ -3,11 +3,12 @@
 	"build": {
 		"dockerfile": "../Dockerfile"
 	},
+	"postCreateCommand": ".devcontainer/postCreateCommand",
 	"customizations": {
 		"vscode": {
-			"extensions": [	
+			"extensions": [
 				"ms-vscode.test-adapter-converter",
-				"bungcip.better-toml",
+				"tamasfe.even-better-toml",
 				"ms-python.python",
 				"ms-python.vscode-pylance",
 				"ms-azuretools.vscode-docker",
