@@ -3,59 +3,67 @@
 # Will also update tags on automatic release.
 
 name: "Publish package"
+permissions:
+  contents: read
 
 # don't allow multiple 'identical' processes to run. A second push should cancel the job from the first one.
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}-${{ github.event.inputs.pypi }}-${{ github.event.inputs.testpypi }}
   cancel-in-progress: true
 
 on:
   workflow_dispatch:
     inputs:
-        pypi:
-          description: Force to pypi
-          type: boolean
-          default: false
-        testpypi:
-          description: Force to testpypi
-          type: boolean
-          default: false
+      pypi:
+        description: Force to pypi
+        type: boolean
+        default: false
+      testpypi:
+        description: Force to testpypi
+        type: boolean
+        default: false
   push:
     branches: [main]
-
 jobs:
-
 # run the tests first, if this fails nothing continues
   test:
-    uses: ./.github/workflows/test.yml
+    uses: $/.github/workflows/test.yml
 
   # run auto either if nothing explicit forced in workflow or it is a push event
   publish-auto:
     if: ${{ (github.event.inputs.testpypi == 'false' && github.event.inputs.pypi == 'false') || github.event_name == 'push' }}
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     steps:
-
-      - uses: actions/checkout@v2
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1; zizmor: ignore[artipacked] (credential required to push tags)
+        with: # zizmor: ignore[artipacked] credential required to push tags
+          persist-credentials: true
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
+        with:
+          version: "0.12.9"
       - name: Fetch repo name
         id: repo_name
-        run: echo "::set-output name=value::$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')"
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: echo "value=${REPOSITORY#*/}" >> "$GITHUB_OUTPUT"
 
       - id: get_status
         name: get_status
+        env:
+          PACKAGE_NAME: ${{ steps.repo_name.outputs.value }}
         run: |
-          pip install toml
-          PACKAGE_NAME=${{ steps.repo_name.outputs.value }}
-          
           # Get current version from pyproject.toml
           CURRENT_VERSION=$(python -c "
-          import toml
-          with open('pyproject.toml', 'r') as f:
-              data = toml.load(f)
+          import tomllib
+          with open('pyproject.toml', 'rb') as f:
+              data = tomllib.load(f)
           print(data['project']['version'])
           ")
-          
+
           # Check if package exists on PyPI
           if curl -s "https://pypi.org/pypi/$PACKAGE_NAME/json" > /dev/null 2>&1; then
             REMOTE_VERSION=$(curl -s "https://pypi.org/pypi/$PACKAGE_NAME/json" | python -c "import sys, json; print(json.load(sys.stdin)['info']['version'])")
@@ -76,52 +84,47 @@ jobs:
         if: ${{ steps.get_status.outputs.remote_exists == 'true' && steps.get_status.outputs.version_difference == 'true'}}
         shell: bash
         run: |
-            git config --global user.email "action@github.com"
-            git config --global user.name "GitHub Action"
-            git tag -f -a -m "Latest release" "latest"
-            for val in $TAGS; do
-              git tag -f -a -m "Release for $val" "$val"
-            done
-            git push -f --tags
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git tag -f -a -m "Latest release" "latest"
+          for val in $TAGS; do
+            git tag -f -a -m "Release for $val" "$val"
+          done
+          git push -f --tags
         env:
           TAGS: ${{ steps.get_status.outputs.version_tags }}
 
       - name: Build and publish to pypi
         if: ${{ steps.get_status.outputs.remote_exists == 'true' && steps.get_status.outputs.version_difference == 'true'}}
         run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          export PATH="/home/runner/.local/bin:$PATH"
           uv build
-          uv publish --token $PYPI_TOKEN
-        secrets:
-          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+          uv publish --trusted-publishing always
 
   # run manual if one of the boolean buttons for workflow was used
   # this can force the initial creation of the package
   publish-manual:
     if: ${{ github.event.inputs.testpypi == 'true' || github.event.inputs.pypi == 'true' }}
-    needs: test 
+    needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
-
-      - uses: actions/checkout@v2
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
+        with:
+          version: "0.12.9"
       - name: Build and publish to pypi
         if: ${{ github.event.inputs.pypi == 'true' }}
         run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          export PATH="/home/runner/.local/bin:$PATH"
           uv build
-          uv publish --token $PYPI_TOKEN
-        secrets:
-          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+          uv publish --trusted-publishing always
 
       - name: Build and publish to testpypi
         if: ${{ github.event.inputs.testpypi == 'true' }}
         run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          export PATH="/home/runner/.local/bin:$PATH"
           uv build
-          uv publish --publish-url https://test.pypi.org/legacy/ --token $TEST_PYPI_TOKEN
-        secrets:
-          TEST_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
+          uv publish --publish-url https://test.pypi.org/legacy/ --trusted-publishing always

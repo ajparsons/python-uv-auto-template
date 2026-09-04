@@ -1,35 +1,38 @@
 name: Run tests
 
+permissions:
+  contents: read
+
 on:
   push:
-    branches-ignore: [ main ]
+    branches-ignore: [main]
   pull_request:
-    branches-ignore: [ main ]
+    branches-ignore: [main]
   workflow_call:
   workflow_dispatch:
-
 jobs:
   test:
     if: ${{ !endsWith(github.repository, '-auto-template') }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
-
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      with:
+        persist-credentials: false
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
       with:
-        version: "latest"
+        version: "0.12.9"
+        enable-cache: true
 
     - name: Install dependencies
       shell: bash
@@ -39,7 +42,7 @@ jobs:
     - name: Test with pytest
       shell: bash
       run: |
-         uv run pytest -v tests
+        uv run pytest -v tests
 
     - name: Test with pyright
       shell: bash
