@@ -52,13 +52,12 @@ The default licence is the MIT Licence. Change if needed.
 
 # Version Management
 
-The template uses **standard version management** with uv where:
-- Version is defined in `pyproject.toml` 
-- `__init__.py` automatically reads the version from `pyproject.toml`
-- Use `uv version --bump patch/minor/major` to bump versions
-- No manual syncing required between files
+The template uses uv for version management:
 
-This follows modern Python packaging standards and integrates seamlessly with uv's workflow.
+- The project version is defined in `pyproject.toml`.
+
+- Use `uv version --bump patch`, `uv version --bump minor`, or `uv version --bump major` to bump versions.
+- Use `uv version 1.2.3` to set an explicit version.
 
 # Development and forking
 

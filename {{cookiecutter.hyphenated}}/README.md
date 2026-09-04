@@ -20,24 +20,19 @@ uv run ruff format .
 uv run pyright
 ```
 
-### Version Management
+### Version management
 
-This project uses standard version management where the version is defined in `pyproject.toml` and automatically read by `__init__.py`.
-
-To bump the version, use uv's built-in version command:
+The version is defined in `pyproject.toml`.
 
 ```bash
-# Bump patch version (1.0.0 -> 1.0.1)
+# Bump the current version
 uv version --bump patch
-
-# Bump minor version (1.0.0 -> 1.1.0)
 uv version --bump minor
-
-# Bump major version (1.0.0 -> 2.0.0)
 uv version --bump major
 
-# Set specific version
+# Set an explicit version
 uv version 1.2.3
 ```
 
-After bumping the version and pushing to main, GitHub Actions will automatically publish to PyPI if all tests pass.
+After changing the version and pushing to `main`, GitHub Actions will publish the
+new release to PyPI if all tests pass.
