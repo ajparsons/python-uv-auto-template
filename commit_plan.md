@@ -17,7 +17,6 @@ Include:
 {{cookiecutter.hyphenated}}/pyproject.toml
 {{cookiecutter.hyphenated}}/uv.lock
 {{cookiecutter.hyphenated}}/src/{{cookiecutter.underscored}}/__init__.py
-{{cookiecutter.hyphenated}}/scripts/bump_version.py
 {{cookiecutter.hyphenated}}/tests/test_meta.py
 {{cookiecutter.hyphenated}}/tests/test_{{cookiecutter.underscored}}.py
 ```
@@ -33,7 +32,6 @@ git add \
   '{{cookiecutter.hyphenated}}/pyproject.toml' \
   '{{cookiecutter.hyphenated}}/uv.lock' \
   '{{cookiecutter.hyphenated}}/src/{{cookiecutter.underscored}}/__init__.py' \
-  '{{cookiecutter.hyphenated}}/scripts/bump_version.py' \
   '{{cookiecutter.hyphenated}}/tests/test_meta.py' \
   '{{cookiecutter.hyphenated}}/tests/test_{{cookiecutter.underscored}}.py'
 git commit -m "Modernize generated package for Python 3.10-3.14"
