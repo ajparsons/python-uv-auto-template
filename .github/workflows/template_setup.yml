@@ -4,7 +4,6 @@ name: Execute template to populate repository
 on:
   push:
   workflow_dispatch:
-
 permissions:
   actions: write
   contents: write
@@ -14,15 +13,16 @@ jobs:
     if: ${{ !endsWith(github.repository, '-auto-template')  }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        with:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1; zizmor: ignore[artipacked] (credential required by auto-commit)
+        with: # zizmor: ignore[artipacked] credential required by auto-commit
           fetch-depth: 0
           ref: ${{ github.head_ref }}
-      
+          persist-credentials: true
+
       - name: Install cookiecutter
         run: pip3 install cookiecutter
 
-      - uses: actions/github-script@v4
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         id: fetch-repo-and-user-details
         with:
           script: |
@@ -52,6 +52,7 @@ jobs:
       - name: Rebuild contents using cookiecutter
         env:
           INFO: ${{ steps.fetch-repo-and-user-details.outputs.result }}
+          AUTHOR_EMAIL: ${{ github.event.pusher.email }}
         run: |
           export REPO_NAME=$(echo $INFO | jq -r '.repository.name')
           # Run cookiecutter
@@ -61,7 +62,7 @@ jobs:
             description="$(echo $INFO | jq -r .repository.description)" \
             github_username="$(echo $INFO | jq -r .repository.owner.login)" \
             author_name="$(echo $INFO | jq -r .repository.owner.name)" \
-            author_email="${{ github.event.pusher.email }}" \
+            author_email="$AUTHOR_EMAIL" \
             github_id=$GITHUB_REPOSITORY
           popd
           # Move generated content to root directory of repo
@@ -81,7 +82,7 @@ jobs:
           rm requirements.dev.txt
 
       - name: Force push new repo contents
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d  # v7.2.0
         with:
           commit_message: "Initial library structure"
           push_options: --force
