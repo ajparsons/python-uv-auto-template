@@ -38,7 +38,7 @@ New repositories include config files and Dockerfile for developing in VS Code o
 
 The test suite contains meta tests for alignment between the `__version__` of the package and the project version, and that the current version is documented in the change log. 
 
-The template version includes a default GitHub Action for testing on Python 3.8-3.10, and publishing to pypi.
+The template version includes a default GitHub Action for testing on Python 3.10-3.14, and publishing to PyPI.
 
 By default, the test action requires pytest, ruff and pyright to return no errors.
 
@@ -46,7 +46,7 @@ The default licence is the MIT Licence. Change if needed.
 
 # Publishing the package
 
-* Set a GitHub Actions secret for PYPI_TOKEN. 
+* Configure this repository as a [trusted publisher](https://docs.pypi.org/trusted-publishers/adding-a-publisher/) on PyPI (and TestPyPI if used).
 * For the initial publish. In the Actions tab for a repo, trigger a manual workfork flow with the 'force to pypi' box ticked.
 * Subsequently, if the project version is bumped and all tests pass - the GitHub Action will automatically publish on push to the main branch.
 
